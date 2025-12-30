@@ -1,0 +1,281 @@
+----------------------------------------------------------------------------------------------------------
+      name:  <unnamed>
+       log:  /Users/tahseenjahan/Downloads/Quant Exercise in Stata/Logfile.log
+  log type:  text
+ opened on:   3 Feb 2025, 15:19:45
+
+. import delimited "/Users/tahseenjahan/Downloads/Quant Exercise in Stata/nhgis0025_ds211_1925_county.csv"
+>  encoding(ISO-8859-1)clear
+using required
+r(100);
+
+. 
+. 
+. import delimited "/Users/tahseenjahan/Downloads/Quant Exercise in Stata/nhgis0025_ds211_1925_county.csv"
+> , encoding(ISO-8859-1)clear
+(25 vars, 3082 obs)
+
+. describe
+
+Contains data
+  obs:         3,082                          
+ vars:            25                          
+ size:       453,054                          
+----------------------------------------------------------------------------------------------------------
+              storage   display    value
+variable name   type    format     label      variable label
+----------------------------------------------------------------------------------------------------------
+gisjoin         str8    %9s                   GISJOIN
+year            int     %8.0g                 YEAR
+state           str20   %20s                  STATE
+statea          int     %8.0g                 STATEA
+county          str25   %25s                  COUNTY
+countya         int     %8.0g                 COUNTYA
+areaname        str22   %22s                  AREANAME
+ab84001         long    %12.0g                AB84001
+ab84002         long    %12.0g                AB84002
+ab84003         long    %12.0g                AB84003
+ab84004         long    %12.0g                AB84004
+ab84005         int     %8.0g                 AB84005
+ab84006         long    %12.0g                AB84006
+ab84007         long    %12.0g                AB84007
+ab84008         int     %8.0g                 AB84008
+ab84009         long    %12.0g                AB84009
+ab84010         long    %12.0g                AB84010
+ab84011         long    %12.0g                AB84011
+ab84012         int     %8.0g                 AB84012
+ab84013         long    %12.0g                AB84013
+ab84014         long    %12.0g                AB84014
+ab84015         long    %12.0g                AB84015
+ab84016         long    %12.0g                AB84016
+ab84017         long    %12.0g                AB84017
+ab84018         long    %12.0g                AB84018
+----------------------------------------------------------------------------------------------------------
+Sorted by: 
+     Note: Dataset has changed since last saved.
+
+. tab
+varlist required
+r(100);
+
+. rename ab84002 acres_corn
+
+. 
+. label variable acres_corn "Acres of harvested corn"
+
+. rename ab84006 acres_wheat
+
+. 
+. label variable acres_wheat "Acres of wheat"
+
+. keep gisjoin year state county acres_corn acres_wheat
+
+. duplicates report GISJOIN
+variable GISJOIN not found
+r(111);
+
+. duplicates report gisjoin
+
+Duplicates in terms of gisjoin
+
+--------------------------------------
+   copies | observations       surplus
+----------+---------------------------
+        1 |         3080             0
+        2 |            2             1
+--------------------------------------
+
+.  duplicates list gisjoin 
+
+Duplicates in terms of gisjoin
+
+  +-----------------+
+  | obs:    gisjoin |
+  |-----------------|
+  |  316   G1200490 |
+  |  317   G1200490 |
+  +-----------------+
+
+.    duplicates drop gisjoin, force
+
+Duplicates in terms of gisjoin
+
+(1 observation deleted)
+
+. save "/Users/tahseenjahan/Downloads/Quant Exercise in Stata/firstfile.dta"
+file /Users/tahseenjahan/Downloads/Quant Exercise in Stata/firstfile.dta saved
+
+. use "/Users/tahseenjahan/Desktop/test_mergefile.dta"
+
+. rename GISJOIN YEAR STATE COUNTY, lower
+
+. save "/Users/tahseenjahan/Desktop/test_mergefile.dta", replace
+file /Users/tahseenjahan/Desktop/test_mergefile.dta saved
+
+. use "/Users/tahseenjahan/Downloads/Quant Exercise in Stata/firstfile.dta"
+
+. 
+.   merge 1:1 gisjoin using "/Users/tahseenjahan/Desktop/test_mergefile.dta"
+
+    Result                           # of obs.
+    -----------------------------------------
+    not matched                         2,024
+        from master                     2,024  (_merge==1)
+        from using                          0  (_merge==2)
+
+    matched                             1,057  (_merge==3)
+    -----------------------------------------
+
+.   
+.   keep if _merge==3
+(2,024 observations deleted)
+
+.   drop _merge
+
+.  describe farmland farms tractors
+
+              storage   display    value
+variable name   type    format     label      variable label
+----------------------------------------------------------------------------------------------------------
+farmland        long    %8.0g                 Acres of farmland
+farms           int     %8.0g                 Number of farms
+tractors        int     %8.0g                 Number of tractors
+
+. gen pct_corn =(acres_corn / farmland)*100
+
+.   label variable pct_corn "Percentage of farmland in corn"
+
+. 
+. gen pct_wheat =(acres_wheat / farmland)*100
+
+. label variable pct_wheat "Percentage of farmland in wheat"
+
+. mean pct_corn pct_wheat if inlist(state, "Kansas", "Iowa", "Michigan")
+
+Mean estimation                   Number of obs   =        287
+
+--------------------------------------------------------------
+             |       Mean   Std. Err.     [95% Conf. Interval]
+-------------+------------------------------------------------
+    pct_corn |   14.63244   .6950999      13.26428     16.0006
+   pct_wheat |   8.790905   .7563719      7.302144    10.27967
+--------------------------------------------------------------
+
+. mean pct_corn pct_wheat if state== "Kansas"
+
+Mean estimation                   Number of obs   =        105
+
+--------------------------------------------------------------
+             |       Mean   Std. Err.     [95% Conf. Interval]
+-------------+------------------------------------------------
+    pct_corn |   12.93998   .8836921      11.18758    14.69237
+   pct_wheat |   20.27325   1.479484      17.33938    23.20713
+--------------------------------------------------------------
+
+.  mean pct_corn pct_wheat if state== "Iowa"
+
+Mean estimation                   Number of obs   =         99
+
+--------------------------------------------------------------
+             |       Mean   Std. Err.     [95% Conf. Interval]
+-------------+------------------------------------------------
+    pct_corn |   26.09088   .7842871      24.53449    27.64728
+   pct_wheat |   1.421303   .1858341      1.052521    1.790085
+--------------------------------------------------------------
+
+.  mean pct_corn pct_wheat if state== "Michigan"
+
+Mean estimation                   Number of obs   =         83
+
+--------------------------------------------------------------
+             |       Mean   Std. Err.     [95% Conf. Interval]
+-------------+------------------------------------------------
+    pct_corn |   3.106204   .3508482      2.408255    3.804153
+   pct_wheat |   3.055292   .3364672      2.385951    3.724632
+--------------------------------------------------------------
+
+. twoway (scatter pct_corn pct_wheat) (lfit pct_corn pct_wheat)
+
+.  gen tractors_per_farm = tractors/farms
+
+.  label variable tractors_per_farm "Number of tractors per farm"
+
+. reg tractors_per_farm pct_corn pct_wheat, robust
+
+Linear regression                               Number of obs     =      1,057
+                                                F(2, 1054)        =     170.51
+                                                Prob > F          =     0.0000
+                                                R-squared         =     0.2462
+                                                Root MSE          =     .08325
+
+------------------------------------------------------------------------------
+             |               Robust
+tractors_p~m |      Coef.   Std. Err.      t    P>|t|     [95% Conf. Interval]
+-------------+----------------------------------------------------------------
+    pct_corn |   .0017989   .0002496     7.21   0.000     .0013091    .0022887
+   pct_wheat |   .0047112   .0002829    16.66   0.000     .0041561    .0052662
+       _cons |   .0866042   .0045714    18.94   0.000     .0776341    .0955743
+------------------------------------------------------------------------------
+
+. tab state
+
+               STATE |      Freq.     Percent        Cum.
+---------------------+-----------------------------------
+            Illinois |        102        9.65        9.65
+             Indiana |         92        8.70       18.35
+                Iowa |         99        9.37       27.72
+              Kansas |        105        9.93       37.65
+            Michigan |         83        7.85       45.51
+           Minnesota |         87        8.23       53.74
+            Missouri |        115       10.88       64.62
+            Nebraska |         93        8.80       73.42
+        North Dakota |         53        5.01       78.43
+                Ohio |         88        8.33       86.75
+        South Dakota |         69        6.53       93.28
+           Wisconsin |         71        6.72      100.00
+---------------------+-----------------------------------
+               Total |      1,057      100.00
+
+. encode state, gen (state_dum)
+
+. reg tractors_per_farm pct_corn pct_wheat i.state_dum, robust
+
+Linear regression                               Number of obs     =      1,057
+                                                F(13, 1043)       =     127.25
+                                                Prob > F          =     0.0000
+                                                R-squared         =     0.4442
+                                                Root MSE          =     .07186
+
+-------------------------------------------------------------------------------
+              |               Robust
+tractors_pe~m |      Coef.   Std. Err.      t    P>|t|     [95% Conf. Interval]
+--------------+----------------------------------------------------------------
+     pct_corn |   .0024308   .0003503     6.94   0.000     .0017435    .0031181
+    pct_wheat |     .00455   .0003647    12.48   0.000     .0038343    .0052656
+              |
+    state_dum |
+     Indiana  |  -.0559878   .0122404    -4.57   0.000    -.0800065   -.0319691
+        Iowa  |   .0070486   .0128834     0.55   0.584    -.0182318     .032329
+      Kansas  |  -.0103122   .0147139    -0.70   0.484    -.0391844    .0185601
+    Michigan  |  -.0351221   .0138593    -2.53   0.011    -.0623175   -.0079268
+   Minnesota  |   .0067977   .0138735     0.49   0.624    -.0204255    .0340209
+    Missouri  |  -.1092375   .0114736    -9.52   0.000    -.1317515   -.0867235
+    Nebraska  |  -.0494244    .014942    -3.31   0.001    -.0787441   -.0201046
+North Dakota  |   .0155979   .0176312     0.88   0.377    -.0189987    .0501944
+        Ohio  |  -.0373999   .0128365    -2.91   0.004    -.0625883   -.0122115
+South Dakota  |   .0490017   .0136298     3.60   0.000     .0222568    .0757467
+   Wisconsin  |   .0374631   .0167423     2.24   0.025     .0046107    .0703156
+              |
+        _cons |   .0991345   .0137805     7.19   0.000     .0720939    .1261752
+-------------------------------------------------------------------------------
+
+. 
+. graph bar (mean) pct_corn pct_wheat, over(state_dum) blabel(bar) title("Average pct_corn and pct_wheat b
+> y State")
+
+. log close
+      name:  <unnamed>
+       log:  /Users/tahseenjahan/Downloads/Quant Exercise in Stata/Logfile.log
+  log type:  text
+ closed on:   3 Feb 2025, 15:52:16
+----------------------------------------------------------------------------------------------------------
