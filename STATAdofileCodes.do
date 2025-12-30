@@ -1,6 +1,6 @@
 //Answer 1
 
-import delimited "/Users/tahseenjahan/Downloads/Quant Exercise in Stata/nhgis0025_ds211_1925_county.csv", encoding(ISO-8859-1)clear
+import delimited "/Users/tahseenjahan/Downloads/Quant Exercise in Stata/raw_countydata.csv", encoding(ISO-8859-1)clear
 
 describe
 tab
